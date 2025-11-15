@@ -8,6 +8,12 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion rootProject.compileSdkVersion
     buildToolsVersion rootProject.buildToolsVersion
+    ndkVersion rootProject.ndkVersion
+    namespace 'com.facebook.spectrum.plugins.jpeg'
+
+    buildFeatures {
+        buildConfig true
+    }
 
     defaultConfig {
         minSdkVersion rootProject.minSdkVersion
@@ -52,4 +58,4 @@ dependencies {
     testImplementation deps.robolectric
 }
 
-apply plugin: 'com.vanniktech.maven.publish'
+// apply plugin: 'com.vanniktech.maven.publish'  // Temporarily disabled for local build

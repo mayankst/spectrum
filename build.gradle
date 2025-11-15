@@ -7,27 +7,28 @@
 
 buildscript {
     ext {
-        minSdkVersion = 15
-        targetSdkVersion = 28
-        compileSdkVersion = 28
-        kotlinVersion = '1.6.10'
-        buildToolsVersion = '30.0.2'
-        sourceCompatibilityVersion = JavaVersion.VERSION_1_7
-        targetCompatibilityVersion = JavaVersion.VERSION_1_7
+        minSdkVersion = 21
+        targetSdkVersion = 33
+        compileSdkVersion = 33
+        ndkVersion = '26.1.10909125'
+        kotlinVersion = '2.2.0'
+        buildToolsVersion = '33.0.1'
+        sourceCompatibilityVersion = JavaVersion.VERSION_1_8
+        targetCompatibilityVersion = JavaVersion.VERSION_1_8
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.4'
+        classpath 'com.android.tools.build:gradle:8.1.1'
         classpath 'com.vanniktech:gradle-maven-publish-plugin:0.18.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
     }
 }
 
 plugins {
-    id 'de.undercouch.download' version '3.4.3'
+    id 'de.undercouch.download' version '5.5.0'
 }
 
 subprojects {

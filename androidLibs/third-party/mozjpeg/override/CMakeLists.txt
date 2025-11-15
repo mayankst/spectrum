@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6.0)
+cmake_minimum_required(VERSION 3.22.1)
 project(mozjpeg C)
 
 set(can_use_assembler TRUE)

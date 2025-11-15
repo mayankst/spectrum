@@ -8,6 +8,12 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion rootProject.compileSdkVersion
     buildToolsVersion rootProject.buildToolsVersion
+    ndkVersion rootProject.ndkVersion
+    namespace 'com.facebook.spectrum'
+
+    buildFeatures {
+        buildConfig true
+    }
 
     defaultConfig {
         minSdkVersion rootProject.minSdkVersion
@@ -46,11 +52,12 @@ android {
     }
 }
 
-apply plugin: 'com.vanniktech.maven.publish'
+// Maven publish temporarily disabled for local build
+// apply plugin: 'com.vanniktech.maven.publish'
 
-task sourcesJar(type: Jar) {
-    from android.sourceSets.main.java.srcDirs
-    classifier = 'sources'
-}
+// task sourcesJar(type: Jar) {
+//     from android.sourceSets.main.java.srcDirs
+//     archiveClassifier.set('sources')
+// }
 
-artifacts.add('archives', sourcesJar)
+// artifacts.add('archives', sourcesJar)
