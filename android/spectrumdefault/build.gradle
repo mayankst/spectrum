@@ -8,6 +8,7 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion rootProject.compileSdkVersion
     buildToolsVersion rootProject.buildToolsVersion
+    namespace 'com.facebook.spectrumdefault'
 
     defaultConfig {
         minSdkVersion rootProject.minSdkVersion
@@ -23,4 +24,4 @@ dependencies {
     api project(':android:spectrumpluginwebp')
 }
 
-apply plugin: 'com.vanniktech.maven.publish'
+// apply plugin: 'com.vanniktech.maven.publish'  // Temporarily disabled for local build

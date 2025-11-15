@@ -13,16 +13,18 @@ import android.widget.Switch
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.facebook.spectrum.sample.adapters.configureSimpleSpinner
+import com.facebook.spectrum.sample.databinding.ConfigurationActivityBinding
 import com.facebook.spectrum.sample.model.BooleanParameter
 import com.facebook.spectrum.sample.model.ConfigurationViewModel
 import com.facebook.spectrum.sample.model.EnumParameter
-import kotlinx.android.synthetic.main.configuration_activity.*
 
 class ConfigurationActivity : AppCompatActivity() {
+  private lateinit var binding: ConfigurationActivityBinding
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    setContentView(R.layout.configuration_activity)
+    binding = ConfigurationActivityBinding.inflate(layoutInflater)
+    setContentView(binding.root)
   }
 
   override fun onStart() {
@@ -31,12 +33,12 @@ class ConfigurationActivity : AppCompatActivity() {
   }
 
   private fun loadFromModel(model: ConfigurationViewModel) {
-    val rootView = configuration_root
+    val rootView = binding.configurationRoot
     model.groups.forEach { group ->
       val groupLayout =
           layoutInflater.inflate(R.layout.configuration_group, rootView, false) as ViewGroup
       groupLayout.findViewById<TextView>(R.id.configuration_group_header).text =
-          group.name.toUpperCase()
+          group.name.uppercase()
 
       group.parameters.forEach { parameter ->
         val parameterLayout =

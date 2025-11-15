@@ -70,7 +70,7 @@ data class CropSpinnerEntry(val crop: Crop) : Entry(crop.title, crop.description
 //
 
 data class ImageTypeSpinnerEntry(val encodedImageFormat: EncodedImageFormat) :
-    Entry(encodedImageFormat.toString().toUpperCase()) {
+    Entry(encodedImageFormat.toString().uppercase()) {
   companion object {
     val allEntries =
         arrayOf(EncodedImageFormat.JPEG, EncodedImageFormat.PNG, EncodedImageFormat.WEBP).map {

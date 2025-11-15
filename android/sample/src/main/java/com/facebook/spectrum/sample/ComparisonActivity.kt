@@ -14,11 +14,12 @@ import android.view.View
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.doOnNextLayout
+import com.facebook.spectrum.sample.databinding.ComparisonActivityBinding
 import com.facebook.spectrum.sample.model.ComparisonViewModel
 import kotlin.math.min
-import kotlinx.android.synthetic.main.comparison_activity.*
 
 class ComparisonActivity : AppCompatActivity() {
+  private lateinit var binding: ComparisonActivityBinding
   private val mDisplayMetrics = DisplayMetrics()
 
   private var mScaleFactor = 1.0f
@@ -27,29 +28,30 @@ class ComparisonActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    setContentView(R.layout.comparison_activity)
+    binding = ComparisonActivityBinding.inflate(layoutInflater)
+    setContentView(binding.root)
     supportActionBar?.hide()
 
     mScaleGestureDetector = ScaleGestureDetector(this, ScaleListener())
     mGestureDetector = GestureDetector(this, GestureListener())
 
-    new_image.doOnNextLayout {
-      val parent = new_image.parent as View
+    binding.newImage.doOnNextLayout {
+      val parent = binding.newImage.parent as View
       mDisplayMetrics.widthPixels = parent.width
       mDisplayMetrics.heightPixels = parent.height
     }
 
-    mDisplayMetrics.widthPixels = (new_image.parent as View).width
-    mDisplayMetrics.heightPixels = (new_image.parent as View).height
+    mDisplayMetrics.widthPixels = (binding.newImage.parent as View).width
+    mDisplayMetrics.heightPixels = (binding.newImage.parent as View).height
 
     val model = ComparisonViewModel.INSTANCE
-    new_image.setImageBitmap(model.outputBitmap)
-    old_image.setImageBitmap(model.inputBitmap)
+    binding.newImage.setImageBitmap(model.outputBitmap)
+    binding.oldImage.setImageBitmap(model.inputBitmap)
 
-    comparison_bar.setOnSeekBarChangeListener(
+    binding.comparisonBar.setOnSeekBarChangeListener(
         object : SeekBar.OnSeekBarChangeListener {
           override fun onProgressChanged(seekBar: SeekBar, progressValue: Int, fromUser: Boolean) {
-            new_image.alpha = progressValue.toFloat() / 100f
+            binding.newImage.alpha = progressValue.toFloat() / 100f
           }
 
           override fun onStartTrackingTouch(seekBar: SeekBar) {}
@@ -68,10 +70,10 @@ class ComparisonActivity : AppCompatActivity() {
     override fun onScale(detector: ScaleGestureDetector): Boolean {
       mScaleFactor = (mScaleFactor * detector.scaleFactor).coerceIn(1f, 10f)
 
-      new_image.scaleX = mScaleFactor
-      new_image.scaleY = mScaleFactor
-      old_image.scaleX = mScaleFactor
-      old_image.scaleY = mScaleFactor
+      binding.newImage.scaleX = mScaleFactor
+      binding.newImage.scaleY = mScaleFactor
+      binding.oldImage.scaleX = mScaleFactor
+      binding.oldImage.scaleY = mScaleFactor
 
       setImageTranslation(0f, 0f)
       return true
@@ -91,12 +93,12 @@ class ComparisonActivity : AppCompatActivity() {
   }
 
   private fun setImageTranslation(distanceX: Float, distanceY: Float) {
-    val scaledImageWidth = new_image.width * mScaleFactor
-    val scaledImageHeight = new_image.height * mScaleFactor
+    val scaledImageWidth = binding.newImage.width * mScaleFactor
+    val scaledImageHeight = binding.newImage.height * mScaleFactor
     val limitWidth = mDisplayMetrics.widthPixels.toFloat()
     val limitHeight = mDisplayMetrics.heightPixels.toFloat()
-    var newX = new_image.translationX - distanceX
-    var newY = new_image.translationY - distanceY
+    var newX = binding.newImage.translationX - distanceX
+    var newY = binding.newImage.translationY - distanceY
 
     val leftEdge = newX - (scaledImageWidth - limitWidth) / 2
     val topEdge = newY - (scaledImageHeight - limitHeight) / 2
@@ -108,10 +110,10 @@ class ComparisonActivity : AppCompatActivity() {
         getOffset(
             topEdge, topEdge + scaledImageHeight, 0f, limitHeight, topEdge + scaledImageHeight / 2)
 
-    new_image.translationX = newX
-    new_image.translationY = newY
-    old_image.translationX = newX
-    old_image.translationY = newY
+    binding.newImage.translationX = newX
+    binding.newImage.translationY = newY
+    binding.oldImage.translationX = newX
+    binding.oldImage.translationY = newY
   }
 
   private fun mean(a: Float, b: Float) = (a + b) / 2

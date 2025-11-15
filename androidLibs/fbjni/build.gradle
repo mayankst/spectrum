@@ -8,6 +8,12 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion rootProject.compileSdkVersion
     buildToolsVersion rootProject.buildToolsVersion
+    ndkVersion rootProject.ndkVersion
+    namespace 'com.facebook.fbjni'
+
+    buildFeatures {
+        buildConfig true
+    }
 
     defaultConfig {
         minSdkVersion rootProject.minSdkVersion
@@ -29,4 +35,4 @@ dependencies {
     compileOnly deps.jsr305
 }
 
-apply plugin: 'com.vanniktech.maven.publish'
+// apply plugin: 'com.vanniktech.maven.publish'  // Temporarily disabled for local build

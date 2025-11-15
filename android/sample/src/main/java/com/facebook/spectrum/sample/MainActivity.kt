@@ -22,9 +22,9 @@ import com.facebook.spectrum.Spectrum
 import com.facebook.spectrum.logging.SpectrumLogcatLogger
 import com.facebook.spectrum.requirements.EncodeRequirement
 import com.facebook.spectrum.sample.adapters.configureSimpleSpinner
+import com.facebook.spectrum.sample.databinding.MainActivityBinding
 import com.facebook.spectrum.sample.model.*
 import java.io.IOException
-import kotlinx.android.synthetic.main.main_activity.*
 
 private fun makeSpectrum(): Spectrum {
   return Spectrum.make(SpectrumLogcatLogger(Log.INFO), DefaultPlugins.get())
@@ -38,6 +38,7 @@ private fun transcode(
 ) = TranscodeAsyncTask(context, spectrum, transcoderViewModel, configurationViewModel).execute()
 
 class MainActivity : AppCompatActivity() {
+  private lateinit var binding: MainActivityBinding
   private val spectrum: Spectrum = makeSpectrum()
   private val transcodeModel = TranscodeViewModel.INSTANCE
   private val configurationModel = ConfigurationViewModel.INSTANCE
@@ -45,9 +46,10 @@ class MainActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    setContentView(R.layout.main_activity)
+    binding = MainActivityBinding.inflate(layoutInflater)
+    setContentView(binding.root)
 
-    button_choose_input.setOnClickListener {
+    binding.buttonChooseInput.setOnClickListener {
       val intent = Intent(Intent.ACTION_PICK, EXTERNAL_CONTENT_URI)
       startActivityForResult(intent, requestCodeMediaPick)
     }
@@ -55,38 +57,38 @@ class MainActivity : AppCompatActivity() {
     transcodeModel.listener = { x -> reloadFromModel(x) }
     setInputImage(defaultImageUri(this))
 
-    button_run_transcode.setOnClickListener {
+    binding.buttonRunTranscode.setOnClickListener {
       transcode(this@MainActivity, spectrum, transcodeModel, configurationModel)
     }
 
-    spinner_input_type.configureSimpleSpinner(layoutInflater, IoTypeSpinnerEntry.allEntries) {
+    binding.spinnerInputType.configureSimpleSpinner(layoutInflater, IoTypeSpinnerEntry.allEntries) {
       transcodeModel.inputType = it.ioType
     }
-    spinner_output_type.configureSimpleSpinner(layoutInflater, IoTypeSpinnerEntry.allEntries) {
+    binding.spinnerOutputType.configureSimpleSpinner(layoutInflater, IoTypeSpinnerEntry.allEntries) {
       transcodeModel.outputType = it.ioType
     }
-    spinner_output_format.configureSimpleSpinner(layoutInflater, ImageTypeSpinnerEntry.allEntries) {
+    binding.spinnerOutputFormat.configureSimpleSpinner(layoutInflater, ImageTypeSpinnerEntry.allEntries) {
       transcodeModel.outputFormat = it.encodedImageFormat
     }
-    spinner_encode_mode.configureSimpleSpinner(layoutInflater, EncodeModeSpinnerEntry.allEntries) {
+    binding.spinnerEncodeMode.configureSimpleSpinner(layoutInflater, EncodeModeSpinnerEntry.allEntries) {
       transcodeModel.encodeMode = it.encodeMode
     }
-    spinner_orientation.configureSimpleSpinner(layoutInflater, OrientationSpinnerEntry.allEntries) {
+    binding.spinnerOrientation.configureSimpleSpinner(layoutInflater, OrientationSpinnerEntry.allEntries) {
       transcodeModel.rotate = it.rotate
     }
-    spinner_scaling.configureSimpleSpinner(layoutInflater, ResizeEntry.allEntries) {
+    binding.spinnerScaling.configureSimpleSpinner(layoutInflater, ResizeEntry.allEntries) {
       transcodeModel.resize = it.resize
     }
-    spinner_cropping.configureSimpleSpinner(layoutInflater, CropSpinnerEntry.allEntries) {
+    binding.spinnerCropping.configureSimpleSpinner(layoutInflater, CropSpinnerEntry.allEntries) {
       transcodeModel.crop = it.crop
     }
 
-    edittext_quality_level.setOnEditorActionListener { v, _, _ ->
+    binding.edittextQualityLevel.setOnEditorActionListener { v, _, _ ->
       transcodeModel.quality = v.text.toString()
       true
     }
 
-    button_edit_configuration.setOnClickListener {
+    binding.buttonEditConfiguration.setOnClickListener {
       startActivity(Intent(this, ConfigurationActivity::class.java))
     }
 
@@ -107,7 +109,7 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  private fun startAnimation() = TransitionManager.beginDelayedTransition(options_root)
+  private fun startAnimation() = TransitionManager.beginDelayedTransition(binding.optionsRoot)
 
   private fun showError(errorMessage: String) = runOnUiThread {
     Toast.makeText(applicationContext, errorMessage, Toast.LENGTH_SHORT).show()
@@ -120,16 +122,16 @@ class MainActivity : AppCompatActivity() {
       return runOnUiThread { reloadFromModel(model) }
     }
 
-    spinner_input_type.setSelection(if (model.inputType === IoType.FILE) 0 else 1)
-    spinner_output_type.setSelection(if (model.outputType === IoType.FILE) 0 else 1)
-    output_format_container.visibility =
+    binding.spinnerInputType.setSelection(if (model.inputType === IoType.FILE) 0 else 1)
+    binding.spinnerOutputType.setSelection(if (model.outputType === IoType.FILE) 0 else 1)
+    binding.outputFormatContainer.visibility =
         when {
           model.outputType === IoType.FILE -> View.VISIBLE
           else -> View.GONE
         }
-    edittext_quality_level.setText(model.quality)
-    source_info.text = model.sourceSummary
-    source_image.setImageBitmap(model.inputImageBitmap)
+    binding.edittextQualityLevel.setText(model.quality)
+    binding.sourceInfo.text = model.sourceSummary
+    binding.sourceImage.setImageBitmap(model.inputImageBitmap)
 
     startAnimation()
 
@@ -138,7 +140,7 @@ class MainActivity : AppCompatActivity() {
           IoType.FILE -> View.VISIBLE
           else -> View.GONE
         }
-    encode_mode_container.visibility = outputOptionsVisibility
+    binding.encodeModeContainer.visibility = outputOptionsVisibility
 
     // Some options disabled when outputting to Bitmap or when lossless is enabled
     val outputQualityVisibility =
@@ -147,11 +149,11 @@ class MainActivity : AppCompatActivity() {
               model.encodeMode.mode != EncodeRequirement.Mode.LOSSLESS -> View.VISIBLE
           else -> View.GONE
         }
-    quality_level_container.visibility = outputQualityVisibility
+    binding.qualityLevelContainer.visibility = outputQualityVisibility
 
     val state = model.transcodeState
-    button_run_transcode.isEnabled = state !== TranscodeState.RUNNING
-    button_run_transcode.setText(
+    binding.buttonRunTranscode.isEnabled = state !== TranscodeState.RUNNING
+    binding.buttonRunTranscode.setText(
         if (state == TranscodeState.RUNNING) R.string.button_transcoding
         else R.string.button_run_transcode)
 
@@ -161,6 +163,9 @@ class MainActivity : AppCompatActivity() {
         model.reset()
       }
       TranscodeState.FINISHED_SUCCESS -> openComparison()
+      TranscodeState.NOT_STARTED, TranscodeState.RUNNING -> {
+        // No action needed for these states
+      }
     }
   }
 
