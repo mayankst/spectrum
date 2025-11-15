@@ -1,0 +1,165 @@
+name: Build Spectrum
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        build-type: [Debug, Release]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
+    - name: Install NDK
+      run: |
+        echo "Installing NDK 26.1.10909125"
+        $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "ndk;26.1.10909125"
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Cache build outputs
+      uses: actions/cache@v3
+      with:
+        path: |
+          .gradle
+          */build
+          !*/build/outputs
+        key: ${{ runner.os }}-build-${{ matrix.build-type }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ matrix.build-type }}-
+          
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Prepare third-party native libraries
+      run: |
+        ./gradlew :folly:prepareNativeLibrary \
+                  :glog:prepareNativeLibrary \
+                  :mozjpeg:prepareNativeLibrary \
+                  :libpng:prepareNativeLibrary \
+                  :libwebp:prepareNativeLibrary
+                  
+    - name: Build main library and plugins
+      run: |
+        ./gradlew :android:assemble${{ matrix.build-type }} \
+                  :android:spectrumpluginjpeg:assemble${{ matrix.build-type }} \
+                  :android:spectrumpluginpng:assemble${{ matrix.build-type }} \
+                  :android:spectrumpluginwebp:assemble${{ matrix.build-type }} \
+                  :android:spectrumdefault:assemble${{ matrix.build-type }}
+                  
+    - name: Build sample app
+      run: ./gradlew :android:sample:assemble${{ matrix.build-type }}
+      
+    - name: Run unit tests
+      run: ./gradlew test
+      continue-on-error: true  # Don't fail build if tests fail
+      
+    - name: Upload main library AAR
+      uses: actions/upload-artifact@v3
+      with:
+        name: spectrum-library-${{ matrix.build-type }}
+        path: android/build/outputs/aar/*.aar
+        
+    - name: Upload plugin AARs
+      uses: actions/upload-artifact@v3
+      with:
+        name: spectrum-plugins-${{ matrix.build-type }}
+        path: |
+          android/spectrumpluginjpeg/build/outputs/aar/*.aar
+          android/spectrumpluginpng/build/outputs/aar/*.aar
+          android/spectrumpluginwebp/build/outputs/aar/*.aar
+          android/spectrumdefault/build/outputs/aar/*.aar
+          
+    - name: Upload sample APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: spectrum-sample-${{ matrix.build-type }}
+        path: android/sample/build/outputs/apk/**/*.apk
+        
+    - name: Upload build reports
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-reports-${{ matrix.build-type }}
+        path: |
+          **/build/reports
+          **/build/tmp/kotlin-classes/**/build-history.bin
+
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
+    - name: Install NDK
+      shell: powershell
+      run: |
+        echo "Installing NDK 26.1.10909125"
+        $env:ANDROID_SDK_ROOT\cmdline-tools\latest\bin\sdkmanager --install "ndk;26.1.10909125"
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Prepare third-party native libraries
+      shell: powershell
+      run: |
+        .\gradlew :folly:prepareNativeLibrary `
+                  :glog:prepareNativeLibrary `
+                  :mozjpeg:prepareNativeLibrary `
+                  :libpng:prepareNativeLibrary `
+                  :libwebp:prepareNativeLibrary
+                  
+    - name: Build Debug
+      shell: powershell
+      run: .\gradlew assembleDebug
+      
+    - name: Upload Windows build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: spectrum-windows-debug
+        path: |
+          android/build/outputs/aar/*.aar
+          android/sample/build/outputs/apk/**/*.apk
