@@ -1,0 +1,109 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
+    - name: Install NDK
+      run: |
+        echo "Installing NDK 26.1.10909125"
+        $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "ndk;26.1.10909125"
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-release-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-release-
+          
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Prepare native libraries
+      run: |
+        ./gradlew :folly:prepareNativeLibrary \
+                  :glog:prepareNativeLibrary \
+                  :mozjpeg:prepareNativeLibrary \
+                  :libpng:prepareNativeLibrary \
+                  :libwebp:prepareNativeLibrary
+                  
+    - name: Build Release
+      run: ./gradlew assembleRelease
+      
+    - name: Build sample app Release
+      run: ./gradlew :android:sample:assembleRelease
+      
+    - name: Create Release Bundle
+      run: |
+        mkdir -p release-artifacts
+        cp android/build/outputs/aar/*-release.aar release-artifacts/
+        cp android/spectrumpluginjpeg/build/outputs/aar/*-release.aar release-artifacts/
+        cp android/spectrumpluginpng/build/outputs/aar/*-release.aar release-artifacts/
+        cp android/spectrumpluginwebp/build/outputs/aar/*-release.aar release-artifacts/
+        cp android/spectrumdefault/build/outputs/aar/*-release.aar release-artifacts/
+        cp android/sample/build/outputs/apk/release/*.apk release-artifacts/ || true
+        
+    - name: Get version
+      id: get_version
+      run: |
+        if [ "${{ github.event_name }}" == "push" ]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+        else
+          VERSION="v${{ github.event.inputs.version }}"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.get_version.outputs.VERSION }}
+        name: Spectrum ${{ steps.get_version.outputs.VERSION }}
+        body: |
+          ## Spectrum Release ${{ steps.get_version.outputs.VERSION }}
+          
+          ### Build Configuration
+          - NDK Version: 26.1.10909125
+          - Kotlin Version: 2.2.0
+          - Android Gradle Plugin: 8.1.1
+          - Min SDK: 21
+          - Target SDK: 33
+          
+          ### Artifacts
+          - `android-release.aar` - Main Spectrum library
+          - `spectrumpluginjpeg-release.aar` - JPEG plugin
+          - `spectrumpluginpng-release.aar` - PNG plugin  
+          - `spectrumpluginwebp-release.aar` - WebP plugin
+          - `spectrumdefault-release.aar` - Default plugin
+          - `sample-release.apk` - Sample application (if signed)
+        files: release-artifacts/*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
