@@ -30,8 +30,8 @@ jobs:
       
     - name: Install NDK
       run: |
-        echo "Installing NDK 26.1.10909125"
-        $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "ndk;26.1.10909125"
+        echo "Installing NDK 28.2.13676358"
+        $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "ndk;28.2.13676358"
         
     - name: Cache Gradle packages
       uses: actions/cache@v4
@@ -89,7 +89,7 @@ jobs:
           ## Spectrum Release ${{ steps.get_version.outputs.VERSION }}
           
           ### Build Configuration
-          - NDK Version: 26.1.10909125
+          - NDK Version: 28.2.13676358
           - Kotlin Version: 2.2.0
           - Android Gradle Plugin: 8.1.1
           - Min SDK: 21
